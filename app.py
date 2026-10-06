@@ -348,7 +348,7 @@ else:
 st.divider()
 
 # Strategy Selection
-st.subheader("🎯 Kitab Ki 5 Hikmat-e-Amali (Strategies)")
+st.subheader("🎯 Hamari 5 Powerful Strategies Se Best Stocks Filter Karein")
 selected_strat = st.selectbox(
     "Strategy chunein jiske mutabiq scan karna hai:",
     [
