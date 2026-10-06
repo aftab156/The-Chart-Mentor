@@ -49,8 +49,17 @@ def show_stock_fundamentals(ticker_symbol):
                 size_tag = "SME / Micro Cap"
 
             # P/E Ratio
-            pe = info.get('trailingPE', 'N/A')
-            pe_val = f"{pe:.2f}" if isinstance(pe, (int, float)) else "N/A"
+            pe = info.get('trailingPE', None)
+            fwd_pe = info.get('forwardPE', None)
+            if pe and isinstance(pe, (int, float)) and pe > 0:
+                pe_val = f"{pe:.1f}"
+                pe_tag = "Sasta" if pe < 15 else ("Wajib" if pe <= 32 else "Mehnga")
+            elif fwd_pe and isinstance(fwd_pe, (int, float)) and fwd_pe > 0:
+                pe_val = f"{fwd_pe:.1f} (Est)"
+                pe_tag = "Forward PE"
+            else:
+                pe_val = "N/A"
+                pe_tag = "Loss Making (Ghaata)"
 
             # Debt to Equity
             de = info.get('debtToEquity', None)
@@ -63,7 +72,7 @@ def show_stock_fundamentals(ticker_symbol):
                 karz_status = "Shariah Filter Pass"
 
             col1.metric("Market Cap", mcap_cr, size_tag)
-            col2.metric("P/E Ratio", pe_val, "Valuation")
+            col2.metric("P/E Ratio", pe_val, pe_tag)
             col3.metric("Karz (Debt/Equity)", de_val, karz_status)
 
             st.markdown("---")
