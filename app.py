@@ -370,7 +370,19 @@ def check_strategy(df, strategy_name):
 st.image("logo.png.jpeg", width=120)
 st.title(" The Chart Mentor")
 st.caption("Price Action, Shariah Trading & Market Radar")
-
+# Mentor Profile & Social Links (Subtle Badge)
+st.markdown("""
+<div style="background-color: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 10px 14px; margin-top: 6px; margin-bottom: 18px;">
+    <div style="font-size: 13.5px; color: #e6edf3; margin-bottom: 4px;">
+        👨‍🏫 <b>Aftab Siddiqui</b> <span style="color: #8b949e; font-size: 12px;">| Professional Trader & Trainer</span>
+    </div>
+    <div style="font-size: 12.5px; color: #8b949e;">
+        🎓 Market sikhne ke liye follow karein: 
+        <a href="https://youtube.com/@trade_with_aftabsiddiqui?si=OzOhPAU9ch6OzVGM" target="_blank" style="text-decoration: none; color: #ff4b4b; font-weight: 600; margin-left: 6px; margin-right: 14px;">▶️ YouTube</a>
+        <a href="https://www.instagram.com/trade_with_aftabsiddiqui" target="_blank" style="text-decoration: none; color: #e1306c; font-weight: 600;">📸 Instagram</a>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 # Market News Radar (Roman English/Hindi)
 st.subheader("🚨 Market Radar: Badi Khabrein Aur Khatra Alert")
 news_list = get_market_news()
