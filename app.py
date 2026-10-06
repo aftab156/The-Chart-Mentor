@@ -412,29 +412,37 @@ if st.button("🚀 Market Scan Karein"):
     if results:
         total_scanned = len(results)
         
-        # Smart Filter: 12-13 stocks me se sabse solid Top 2 chhan kar nikalna
-        if total_scanned > 2:
+        # Smart Filter: 12-15 stocks me se sabse solid Top 5 chhan kar nikalna
+        if total_scanned > 5:
             def calculate_rank(s):
                 score = 0
+                entry = float(s.get('Entry', 1))
+                
+                # Penny Stock Avoid Filter (Agar price 30 se kam hai toh score kam karein)
+                if entry < 30:
+                    score -= 50
+                elif entry >= 100:
+                    score += 20  # Aache volume wale stocks ko priority
+                
                 # 1. Discount aur Value check
                 disc = float(str(s.get('Discount', '0')).replace('%', '').strip() or 0)
                 if 15 <= disc <= 45: score += 40   # Sweet spot demand area
                 
                 # 2. Risk to Reward Check (Target / Stoploss distance)
-                entry = float(s.get('Entry', 1))
                 sl = float(s.get('StopLoss', 1))
                 t1 = float(s.get('Target1', 1))
                 risk = abs(entry - sl)
                 reward = abs(t1 - entry)
                 if risk > 0 and (reward / risk) >= 2.0: score += 35
                 
-                # 3. Momentum / CMP check
+                # 3. Momentum check
                 if entry > sl: score += 25
                 return score
             
-            # Jo stock sabse mazboot score karega wo Rank 1 aur 2 par aayega
-            results = sorted(results, key=calculate_rank, reverse=True)[:2]
+            # Jo stock sabse mazboot score karega wo Top 5 me aayega
+            results = sorted(results, key=calculate_rank, reverse=True)[:5]
 
+        st.success(f"🎯 Kul {total_scanned} filtered stocks me se **Top {len(results)} Sabse Solid Setup** chhan kar nikaale gaye hain!")
         st.success(f"🎯 Kul {total_scanned} filtered stocks me se **Top {len(results)} Sabse Solid Setup** chhan kar nikaale gaye hain!")
         for r in results:
             with st.container():
