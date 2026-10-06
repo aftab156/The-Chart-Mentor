@@ -14,13 +14,13 @@ from datetime import datetime
 SHEET_ID = "1EHMsGwLi-MuNmyODYo65TsvL9WHV5aFvmLgD_Al-j2U"
 SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
 def show_stock_fundamentals(ticker_symbol):
-    """Stock ke fundamentals, real business model aur taaza news dikhane ke liye"""
+    """Stock ke fundamentals, real business model aur live market news Roman English me dikhane ke liye"""
     try:
         clean_sym = ticker_symbol.replace('.NS', '').replace('.BO', '')
         t = yf.Ticker(ticker_symbol)
         info = t.info if hasattr(t, 'info') else {}
 
-        # 1. Screener.in se asli business aur market details nikalna (Backup engine)
+        # 1. Screener.in se asli business details nikalna (Backup engine)
         screener_summary = ""
         try:
             scr_url = f"https://www.screener.in/company/{clean_sym}/"
@@ -30,7 +30,6 @@ def show_stock_fundamentals(ticker_symbol):
                 html = resp.text
                 if 'class="about"' in html:
                     part = html.split('class="about"')[1].split('</div>')[0]
-                    # HTML tags saaf karna
                     import re
                     clean_text = re.sub('<[^<]+?>', '', part).strip()
                     screener_summary = clean_text.replace('\n', ' ')
@@ -79,7 +78,6 @@ def show_stock_fundamentals(ticker_symbol):
 
             st.markdown("### 🛠️ Company Ka Karobaar (Business Profile)")
             
-            # Agar Yahoo me summary hai toh wo dikhayein, nahi toh Screener ka asli data dikhayein
             if summary and len(summary.strip()) > 30:
                 st.write(f"**Karobaar Detail:** {summary[:350]}...")
             elif screener_summary and len(screener_summary.strip()) > 15:
@@ -89,33 +87,61 @@ def show_stock_fundamentals(ticker_symbol):
 
             st.markdown(f"🔗 [Company ki poori balance sheet aur karobaar Screener par dekhein](https://www.screener.in/company/{clean_sym}/consolidated/)")
 
-            # Taaza Khabrein aur Asar
+            # Taaza Khabrein aur Asar (Auto Google RSS & Live News Engine)
             st.markdown("---")
             st.markdown("### 📰 Taaza Khabrein & Market Impact")
-            news_items = t.news[:3] if hasattr(t, 'news') and t.news else []
+            
+            news_items = []
+            
+            # Pehle direct headlines check karein
+            if hasattr(t, 'news') and t.news:
+                for item in t.news[:3]:
+                    news_items.append({
+                        'title': item.get('title', ''),
+                        'link': item.get('link', '#'),
+                        'publisher': item.get('publisher', 'Market News')
+                    })
+            
+            # Agar direct news na mile, toh Google News RSS se live khabar lein
+            if not news_items:
+                try:
+                    import xml.etree.ElementTree as ET
+                    rss_url = f"https://news.google.com/rss/search?q={clean_sym}+share+market+india&hl=en-IN&gl=IN&ceid=IN:en"
+                    rss_resp = requests.get(rss_url, timeout=3)
+                    if rss_resp.status_code == 200:
+                        root = ET.fromstring(rss_resp.content)
+                        for item in root.findall('./channel/item')[:3]:
+                            news_items.append({
+                                'title': item.find('title').text,
+                                'link': item.find('link').text,
+                                'publisher': item.find('source').text if item.find('source') is not None else 'Live Market'
+                            })
+                except Exception:
+                    pass
 
+            # News aur Asar screen par dikhayein
             if news_items:
                 for item in news_items:
                     title = item.get('title', '')
                     link = item.get('link', '#')
-                    publisher = item.get('publisher', 'Market News')
+                    publisher = item.get('publisher', 'Financial Media')
                     title_lower = title.lower()
-                    if any(w in title_lower for w in ["profit", "gain", "order", "growth", "jump", "rise", "high", "deal", "dividend"]):
+
+                    if any(w in title_lower for w in ["profit", "gain", "order", "growth", "jump", "rise", "high", "deal", "dividend", "q1", "q2", "q3", "q4"]):
                         impact = "🟢 **Asar:** Positive momentum ban sakta hai."
-                    elif any(w in title_lower for w in ["fall", "loss", "drop", "down", "probe", "fraud", "cut", "penalty", "decline"]):
+                    elif any(w in title_lower for w in ["fall", "loss", "drop", "down", "probe", "fraud", "cut", "penalty", "decline", "sebi"]):
                         impact = "🔴 **Asar:** Thoda sambhal kar rahein, negative dabao ho sakta hai."
                     else:
-                        impact = "⚪ **Asar:** Neutral update hai, chart structure par nazar rakhein."
+                        impact = "⚪ **Asar:** Neutral update hai, price action aur levels par dhyan dein."
+
                     st.markdown(f"- 🔗 [{title}]({link}) *(Source: {publisher})*")
                     st.caption(impact)
             else:
-                # Agar Yahoo news na de, toh live Google News search link de dein
-                st.info("Yahoo par koi direct headline nahi mili.")
-                st.markdown(f"🔍 [Google par is stock ki taaza khabar padhein](https://www.google.com/search?q={clean_sym}+share+latest+news&tbm=nws)")
+                st.caption("📌 Filhaal koi badi headline nahi mili. Pure Price Action aur Structure par focus karein.")
+                st.markdown(f"🔍 [Google par taaza updates check karein](https://www.google.com/search?q={clean_sym}+share+latest+news&tbm=nws)")
 
     except Exception as e:
         st.caption("Data load karne me dikkat aayi.")
-
 def check_login(mobile, password):
     try:
         df = pd.read_csv(SHEET_URL)
