@@ -13,6 +13,141 @@ from datetime import datetime
 # Google Sheet से यूज़र डेटा लोड करने का फ़ंक्शन
 SHEET_ID = "1EHMsGwLi-MuNmyODYo65TsvL9WHV5aFvmLgD_Al-j2U"
 SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
+def show_stock_fundamentals(ticker_symbol):
+    """Stock ke fundamentals, business profile aur taaza news Roman Urdu/Hinglish me dikhane ke liye"""
+    try:
+        t = yf.Ticker(ticker_symbol)
+        info = t.info
+
+        with st.expander(
+            f"📊 {ticker_symbol} - Company Profile, Mazbooti aur Taaza Khabar"
+        ):
+            col1, col2, col3 = st.columns(3)
+
+            # 1. Market Cap (Company ka Size)
+            mcap = info.get("marketCap", None)
+            if mcap:
+                mcap_cr = f"₹{mcap / 10**7:,.2f} Cr"
+                size_tag = (
+                    "Badi Company (Large Cap)"
+                    if mcap > 20000 * 10**7
+                    else (
+                        "Darmiyani Company (Mid Cap)"
+                        if mcap > 5000 * 10**7
+                        else "Chhoti Company (Small Cap)"
+                    )
+                )
+            else:
+                mcap_cr = "N/A"
+                size_tag = "N/A"
+
+            # 2. P/E Ratio (Valuation)
+            pe = info.get("trailingPE", "N/A")
+            pe_val = f"{pe:.2f}" if isinstance(pe, (int, float)) else "N/A"
+
+            # 3. Debt to Equity (Karz ki sthiti)
+            de = info.get("debtToEquity", None)
+            if de is not None:
+                de_ratio = de / 100 if de > 5 else de
+                de_val = f"{de_ratio:.2f}"
+                karz_status = (
+                    "Karz Kam Hai (Safe)"
+                    if de_ratio < 0.5
+                    else (
+                        "Darmiyana Karz (Moderate)"
+                        if de_ratio <= 1.0
+                        else "Karz Zyada Hai (Alert)"
+                    )
+                )
+            else:
+                de_val = "N/A"
+                karz_status = "Data N/A"
+
+            col1.metric("Market Cap", mcap_cr, size_tag)
+            col2.metric("P/E Ratio", pe_val, "Valuation")
+            col3.metric("Karz (Debt/Equity)", de_val, karz_status)
+
+            st.markdown("---")
+
+            # Company ka Karobaar (Sector & Summary)
+            sector = info.get("sector", "N/A")
+            industry = info.get("industry", "N/A")
+            summary = info.get("longBusinessSummary", "")
+
+            st.markdown(f"**🏢 Sector:** `{sector}` | **Industry:** `{industry}`")
+
+            # Karobaar ka aasan khulasa
+            st.markdown("### 🛠️ Company Ka Karobaar (Business Profile)")
+            if summary:
+                # English summary ka pehla hissa display karega
+                st.write(
+                    f"**Company Profile:** {summary[:300]}... *(Detail profile info)*"
+                )
+            else:
+                st.write("Is company ke karobaar ka detail filhaal available nahi hai.")
+
+            # Taaza Khabrein aur Asar (Recent News)
+            st.markdown("---")
+            st.markdown("### 📰 Taaza Khabrein & Market Impact")
+            news_items = t.news[:3] if hasattr(t, "news") and t.news else []
+
+            if news_items:
+                for item in news_items:
+                    title = item.get("title", "")
+                    link = item.get("link", "#")
+                    publisher = item.get("publisher", "Market News")
+
+                    # Title ke mutabiq asar ka andaza (Heuristic check)
+                    title_lower = title.lower()
+                    if any(
+                        w in title_lower
+                        for w in [
+                            "profit",
+                            "gain",
+                            "order",
+                            "growth",
+                            "jump",
+                            "rise",
+                            "high",
+                            "deal",
+                            "dividend",
+                        ]
+                    ):
+                        impact = "🟢 **Asar:** Positive momentum ban sakta hai."
+                    elif any(
+                        w in title_lower
+                        for w in [
+                            "fall",
+                            "loss",
+                            "drop",
+                            "down",
+                            "probe",
+                            "fraud",
+                            "cut",
+                            "penalty",
+                            "decline",
+                        ]
+                    ):
+                        impact = (
+                            "🔴 **Asar:** Thoda sambhal kar rahein, negative dabao ho"
+                            " sakta hai."
+                        )
+                    else:
+                        impact = (
+                            "⚪ **Asar:** Neutral update hai, technical price action par"
+                            " nazar rakhein."
+                        )
+
+                    st.markdown(f"- 🔗 [{title}]({link}) *(Source: {publisher})*")
+                    st.caption(impact)
+            else:
+                st.info(
+                    "Filhaal koi taaza news headline nahi mili. Chart structure aur"
+                    " price action par dhyan dein."
+                )
+
+    except Exception as e:
+        st.caption("Fundamental aur news data load karne me dikkat aayi.")
 
 def check_login(mobile, password):
     try:
@@ -249,6 +384,7 @@ if st.button("🚀 Market Scan Karein"):
                 col4.metric("Stop-Loss (SL)", f"₹{r['StopLoss']}")
                 st.write(f"🎯 **Target 1 (1:2 RRR):** ₹{r['Target1']} | **Target 2:** ₹{r['Target2']}")
                 st.caption("🕌 Shariah Status: 100% Pass (Halaal Business & Debt < 33%)")
+                show_stock_fundamentals(r['Symbol'])
                 st.divider()
                 
         # Send Telegram Summary
