@@ -114,18 +114,7 @@ def get_market_news():
     return news_items
 
 # 2. Stock Watchlist (Halal & Technical Candidates)
-WATCHLIST = [
-    {"symbol": "AARTIIND.NS", "name": "Aarti Industries"},
-    {"symbol": "GPPL.NS", "name": "Gujarat Pipavav Port"},
-    {"symbol": "PRINCEPIPE.NS", "name": "Prince Pipes"},
-    {"symbol": "NOCIL.NS", "name": "NOCIL Ltd"},
-    {"symbol": "EXIDEIND.NS", "name": "Exide Industries"},
-    {"symbol": "PETRONET.NS", "name": "Petronet LNG"},
-    {"symbol": "CASTROLIND.NS", "name": "Castrol India"},
-    {"symbol": "GSPL.NS", "name": "Gujarat State Petronet"},
-    {"symbol": "MANINFRA.NS", "name": "Man Infraconstruction"}
-]
-
+WATCHLIST = [{'symbol': sym, 'name': sym.replace('.NS', '')} for sym in STOCKS_TO_SCAN]
 # 3. Technical Strategy Analyzer (Kitab ke 5 Rules ke Mutabiq)
 def check_strategy(df, strategy_name):
     if len(df) < 30:
