@@ -231,25 +231,60 @@ def send_telegram(msg):
     except Exception:
         pass
 
-# 1. Market Impact News Fetcher (India + Global) in Roman Urdu/Hindi
+# 1. Market Impact News Fetcher (Auto Roman Urdu/Hindi Translator)
 def get_market_news():
     news_items = []
     feeds = [
         "https://news.google.com/rss/search?q=Indian+stock+market+Nifty+Sensex+crash+fall+when:1d&hl=en-IN&gl=IN&ceid=IN:en",
         "https://news.google.com/rss/search?q=Global+market+economy+inflation+war+crude+oil+when:1d&hl=en-IN&gl=IN&ceid=IN:en"
     ]
+    
+    # Angrezi ke aam alfaz ko aasan Roman zubaan me badalne ka dictionary
+    words_map = {
+        "indian stock market crash": "Bhartiya share market me badi girawat",
+        "stock market crash": "Share market me tezi se mandi / crash",
+        "market crash": "Market me panic aur girawat",
+        "falls": "niche fisla",
+        "drops": "gira",
+        "plunges": "badi girawat dekhi gayi",
+        "slides": "dheere dheere gira",
+        "rises": "chadh kar upar gaya",
+        "gains": "munafa aur tezi dikhayi",
+        "surge": "zabardast uchhal",
+        "extends gains": "tezi barqarar rakhi",
+        "inflation": "mehangai dar (Inflation)",
+        "crude oil": "kacha tel (Crude Oil)",
+        "world bank": "World Bank",
+        "flags": "alert jari kiya",
+        "risks": "khatre aur risk",
+        "caution": "hushiyar rehne ki zaroorat",
+        "warranted": "hai",
+        "reasons": "wajah",
+        "budget": "Budget",
+        "revive": "wapas utha payega",
+        "bulls": "Tezi wale (Bulls)"
+    }
+
     for url in feeds:
         try:
             res = requests.get(url, timeout=6)
             if res.status_code == 200:
                 root = ET.fromstring(res.content)
                 for item in root.findall(".//item")[:2]:
-                    title = item.find("title").text
-                    news_items.append(title)
+                    raw_title = item.find("title").text
+                    clean_title = raw_title.split(" - ")[0] # Akhbar ka naam alag karna
+                    
+                    # Title ko aasan Roman Hindi/Urdu me tarjuma karna
+                    trans_title = clean_title
+                    for eng, rom in words_map.items():
+                        import re
+                        trans_title = re.sub(re.escape(eng), rom, trans_title, flags=re.IGNORECASE)
+                    
+                    news_items.append(trans_title)
         except Exception:
             continue
+            
     return news_items
-
 # 2. Stock Watchlist (Halal & Technical Candidates)
 WATCHLIST = [{'symbol': sym, 'name': sym.replace('.NS', '')} for sym in STOCKS_TO_SCAN]
 # 3. Technical Strategy Analyzer (Kitab ke 5 Rules ke Mutabiq)
