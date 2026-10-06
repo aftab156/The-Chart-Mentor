@@ -7,6 +7,64 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 
 st.set_page_config(page_title="The Chart Mentor", page_icon="logo.png.jpeg", layout="wide")
+import pandas as pd
+from datetime import datetime
+
+# Google Sheet से यूज़र डेटा लोड करने का फ़ंक्शन
+SHEET_ID = "1EHMsGwLi-MuNmyODYo65TsvL9WHV5aFvmLgD_Al-j2U"
+SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
+
+def check_login(mobile, password):
+    try:
+        df = pd.read_csv(SHEET_URL)
+        df['Mobile'] = df['Mobile'].astype(str).str.strip()
+        df['Password'] = df['Password'].astype(str).str.strip()
+        
+        user = df[(df['Mobile'] == str(mobile).strip()) & (df['Password'] == str(password).strip())]
+        
+        if not user.empty:
+            exp_date_str = str(user.iloc[0]['Expiry_Date']).strip()
+            status = str(user.iloc[0]['Status']).strip()
+            exp_date = datetime.strptime(exp_date_str, "%Y-%m-%d").date()
+            today = datetime.now().date()
+            
+            if status.lower() != 'active':
+                return False, "आपका अकाउंट निष्क्रिय (Inactive) है। एडमिन से संपर्क करें।"
+            elif today > exp_date:
+                return False, "EXPIRED"
+            else:
+                return True, f"लॉगिन सफल! वैलिडिटी: {exp_date_str} तक।"
+        else:
+            return False, "गलत मोबाइल नंबर या पासवर्ड!"
+    except Exception as e:
+        return False, "डेटाबेस कनेक्ट करने में समस्या आ रही है।"
+
+# सेशन स्टेट इनिशियलाइज़ेशन
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
+
+# अगर लॉगिन नहीं है तो लॉगिन स्क्रीन दिखाएँ
+if not st.session_state.logged_in:
+    st.image("logo.png.jpeg", width=150)
+    st.subheader("Login to The Chart Mentor")
+    
+    login_mobile = st.text_input("Mobile Number")
+    login_pass = st.text_input("Password", type="password")
+    
+    if st.button("Login"):
+        success, msg = check_login(login_mobile, login_pass)
+        if success:
+            st.session_state.logged_in = True
+            st.success(msg)
+            st.rerun()
+        elif msg == "EXPIRED":
+            st.error("⚠️ आपकी 30 दिनों की वैधता समाप्त हो चुकी है!")
+            st.warning("आगे इस्तेमाल जारी रखने के लिए नीचे दिए गए स्कैनर पर फ़ीस भेजें और स्क्रीनशॉट WhatsApp करें:")
+            st.image("payment_qr.jpg.jpeg", width=250)
+            st.markdown("[📲 WhatsApp पर स्क्रीनशॉट भेजें](https://wa.me/918862035610?text=Hello%20Sir,%20I%20have%20paid%20the%20subscription%20fee.)")
+        else:
+            st.error(msg)
+    st.stop()
 
 # Telegram Bot Credentials
 BOT_TOKEN = "8903624248:AAGntVRdoPHXCGqWY42GL0gnBhTRwv5LB9s"
