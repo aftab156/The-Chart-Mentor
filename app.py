@@ -65,6 +65,22 @@ if not st.session_state.logged_in:
         else:
             st.error(msg)
     st.stop()
+    # --- GOOGLE SHEET SE SHARIAH STOCKS LOAD KARNE KA CODE ---
+SHARIAH_CSV_URL = "https://docs.google.com/spreadsheets/d/1EHMsGwLi-MuNmyODYo65TsvL9WHV5aFvmLgD_Al-j2U/export?format=csv&gid=75452515"
+
+@st.cache_data(ttl=3600)
+def get_shariah_stock_list():
+    try:
+        df_stocks = pd.read_csv(SHARIAH_CSV_URL)
+        # Google Sheet se saare symbol nikal kar saaf list banayega
+        valid_symbols = df_stocks['Symbol'].dropna().astype(str).str.strip().tolist()
+        return valid_symbols
+    except Exception as e:
+        # agar sheet load hone me koi dikkat aaye to backup list
+        return ["TATAMOTORS.NS", "TATASTEEL.NS", "BEL.NS", "CIPLA.NS", "ONGC.NS"]
+
+# Scanner ab is dynamic list ko scan karega:
+STOCKS_TO_SCAN = get_shariah_stock_list()
 
 # Telegram Bot Credentials
 BOT_TOKEN = "8903624248:AAGntVRdoPHXCGqWY42GL0gnBhTRwv5LB9s"
