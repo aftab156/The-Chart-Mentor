@@ -6,7 +6,7 @@ import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime
 
-st.set_page_config(page_title="The Chart Mentor", page_icon="📈", layout="wide")
+st.set_page_config(page_title="The Chart Mentor", page_icon="logo.png.jpeg", layout="wide")
 
 # Telegram Bot Credentials
 BOT_TOKEN = "8903624248:AAGntVRdoPHXCGqWY42GL0gnBhTRwv5LB9s"
@@ -132,7 +132,8 @@ def check_strategy(df, strategy_name):
     return None
 
 # --- UI Layout ---
-st.title("📈 The Chart Mentor")
+st.image("logo.png.jpeg", width=120)
+st.title(" The Chart Mentor")
 st.caption("Price Action, Shariah Trading & Market Radar")
 
 # Market News Radar (Roman English/Hindi)
